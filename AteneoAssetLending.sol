@@ -100,7 +100,7 @@ contract AteneoLendingContract {
     /// @notice Retrieve the full list of listed assets
     /// @return An array of all listed assets
     function getListedAssets() public view returns (Asset[] memory) {
-        // TO ADD: Return the array of listed assets
+        return listedAssets; // ADDED: Return the array of listed assets
     }
 }
 
