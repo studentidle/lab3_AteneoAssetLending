@@ -12,8 +12,8 @@ struct Asset {
 
 contract AteneoLendingContract {
 
-    // TO ADD: Set the penalty fee for returning an asset late
-    // TO ADD: Set the security deposit for all borrowers 
+    uint constant PENALTY = 2000000; // ADDED: Set the penalty fee for returning an asset late
+    uint constant DEPOSIT = 1000000; // ADDED: Set the security deposit for all borrowers
 
     mapping(address => bool) public flags; // Mapping of flagged users
     mapping(address => bool) private borrowers; // Mapping of borrowers and borrowing status
@@ -21,19 +21,19 @@ contract AteneoLendingContract {
 
     /// @notice Modifier that checks if user is flagged
     modifier flagged() {
-        // TO ADD: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
+        require(flags[msg.sender] == true, "You are not flagged."); // ADDED: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
         _;
     }
 
     /// @notice Modifier that checks if user is not flagged
     modifier notFlagged() {
-        // TO ADD: Modifier to check if user is not flagged, else revert with an error message for paying penalty
+        require(flags[msg.sender] == false, "You are flagged! Pay the penalty first."); // ADDED: Modifier to check if user is not flagged, else revert with an error message for paying penalty
         _;
     }
 
-    /// @notice Modifier that checks if user is not flagged
+    /// @notice Modifier that checks if user is not borrowing
     modifier notBorrowing() {
-        // TO ADD: Modifier to check if user is not currently borrowing an asset
+        require(borrowers[msg.sender] == false, "You're already borrowing an asset!"); // ADDED: Modifier to check if user is not currently borrowing an asset
         _;
     }
 
@@ -41,17 +41,37 @@ contract AteneoLendingContract {
     /// @param _name The name of the asset
     /// @param _rental_fee The rental fee for borrowing the asset
     function listItem(string memory _name, uint _rental_fee) external {
-        // TO ADD: Add asset to the list of available assets
+        // ADDED: Add asset to the list of available assets
+        Asset memory newAsset = Asset({ 
+            owner: msg.sender,
+            name: _name,
+            rental_fee: _rental_fee,
+            borrowed: false,
+            currentContract: address(0)
+        });
+
+        listedAssets.push(newAsset);
     }
 
     /// @notice Borrow an asset by ID, paying rental and deposit fees
     /// @param _itemId The index of the asset in the list
     function borrow(uint _itemId) external payable notBorrowing notFlagged {
-        // TO ADD: Check if _itemId is valid
-        // TO ADD: Check if asset is already borrowed
-        // TO ADD: Check if the payment is correct
+        require(_itemId < listedAssets.length, "Asset does not exist."); // ADDED: Check if _itemId is valid
+        Asset storage asset = listedAssets[_itemId];
+        
+        require(asset.borrowed == false, "Asset is already borrowed!"); // ADDED: Check if asset is already borrowed
 
-        // TO ADD: Handle borrowing action, transfer deposit and rental fees, and update borrower and item status
+        uint payment = asset.rental_fee + DEPOSIT; // ADDED: Check if the payment is correct
+        require(msg.value == payment, "Insufficient payment.");
+
+        // ADDED: Handle borrowing action, transfer deposit and rental fees, and update borrower and item status
+        AssetContract newAssetContract = new AssetContract(address(this), asset.owner, msg.sender, _itemId);
+        asset.borrowed = true;
+        asset.currentContract = address(newAssetContract);
+
+        borrowers[msg.sender] = true;
+
+        payable(asset.owner).transfer(asset.rental_fee);
     }
 
     /// @notice Mark an asset as returned (can only be called by the AssetContract)
@@ -95,7 +115,7 @@ contract AssetContract {
     uint private duration = 30 seconds; // Set to 30 seconds only for testing purposes
 
     /// @notice Allow this contract to receive ether
-    // TO ADD: fallback function to receive Ether transfers
+    receive() external payable {} // ADDED: fallback function to receive Ether transfers
 
     /// @notice Constructor sets initial state and deadline
     /// @param _parent The address of the AteneoLendingContract
@@ -103,14 +123,26 @@ contract AssetContract {
     /// @param _borrower The borrower of the asset
     /// @param _itemId The index of the borrowed asset
     constructor(address _parent, address _owner, address _borrower, uint _itemId) {
-        // TO ADD: Constructor function statements
+        // ADDED: Constructor function statements
+        parent = _parent;
+        owner = _owner;
+        borrower = _borrower;
+        itemId = _itemId;
+        deadline = block.timestamp + duration;
+        returned = false;
     }
 
     /// @notice Called by borrower to return the item, returns the deposit fee, and triggers penalty if overdue
     function returnItem() external {
-        // TO ADD: Verify the borrower
-        // TO ADD: Verify if the asset has already been returned
+        require(msg.sender == borrower, "You are not the borrower!"); // ADDED: Verify the borrower
+        require(returned == false, "Asset already returned."); // ADDED: Verify if the asset has already been returned
         
-        // TO ADD: Handle return actions, update the return status, check return timestamp, and handle penalties if overdue
+        // ADDED: Handle return actions, update the return status, check return timestamp, and handle penalties if overdue
+        returned = true;
+        if (block.timestamp > deadline) {
+            AteneoLendingContract(parent).flag(borrower, itemId);
+        }
+        AteneoLendingContract(parent).markReturned(itemId, borrower);
+        payable(borrower).transfer(address(this).balance);
     }
 }
