@@ -42,7 +42,7 @@ contract AteneoLendingContract {
     /// @param _rental_fee The rental fee for borrowing the asset
     function listItem(string memory _name, uint _rental_fee) external {
         // (ADDED) TO ADD: Add asset to the list of available assets
-        Asset newAsset = new Asset({
+        Asset memory newAsset = Asset({
             owner: msg.sender,
             name: _name,
             rental_fee: _rental_fee,
@@ -57,10 +57,21 @@ contract AteneoLendingContract {
     /// @param _itemId The index of the asset in the list
     function borrow(uint _itemId) external payable notBorrowing notFlagged {
         require(_itemId < listedAssets.length, "Asset does not exist."); // (ADDED) TO ADD: Check if _itemId is valid
-        // TO ADD: Check if asset is already borrowed
-        // TO ADD: Check if the payment is correct
+        Asset storage asset = listedAssets[_itemId];
+        
+        require(asset.borrowed == false, "Asset is already borrowed!"); // (ADDED) TO ADD: Check if asset is already borrowed
+        
+        uint payment = asset.rental_fee + DEPOSIT; // (ADDED) TO ADD: Check if the payment is correct
+        require(msg.value == payment, "Insufficient payment.");
 
         // TO ADD: Handle borrowing action, transfer deposit and rental fees, and update borrower and item status
+        AssetContract newAssetContract = new AssetContract(address(this), asset.owner, msg.sender, _itemId);
+        asset.borrowed = true;
+        asset.currentContract = address(newAssetContract);
+
+        borrowers[msg.sender] = true;
+
+        payable(asset.owner).transfer(asset.rental_fee);
     }
 
     /// @notice Mark an asset as returned (can only be called by the AssetContract)
