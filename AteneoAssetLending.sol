@@ -77,10 +77,19 @@ contract AteneoLendingContract {
     /// @notice Mark an asset as returned (can only be called by the AssetContract)
     /// @param _itemId The index of the asset in the list
     function markReturned(uint _itemId, address _borrower) external {
-        // TO ADD: Validate if caller is AssetContract
-        // TO ADD: Validate if asset is borrowed
+        require(_itemId < listedAssets.length, "Asset does not exist.");
+        Asset storage asset = listedAssets[_itemId];
+        
+        // ADDED: Validate if caller is AssetContract
+        require(msg.sender == asset.currentContract, "Unauthorized caller!");
+
+        // ADDED: Validate if asset is borrowed
+        require(asset.borrowed == true, "Asset is not borrowed!");
 
         // TO ADD: Update borrower and item status
+        asset.borrowed = false;
+        asset.currentContract = address(0);
+        borrowers[_borrower] = false;
     }
 
     /// @notice Flag a borrower who returned an asset late (can only be called by the AssetContract)
