@@ -87,9 +87,16 @@ contract AteneoLendingContract {
     /// @param _borrower The address of the borrower to be flagged
     /// @param _itemId The index of the borrowed asset
     function flag(address _borrower, uint _itemId) external {
-        // TO ADD: Validate _itemId
-        // TO ADD: Validate if caller is AssetContract
-        // TO ADD: Update borrower status
+        // ADDED: Validate _itemId
+        require(_itemId < listedAssets.length, "Asset does not exist.");
+        Asset storage asset = listedAssets[_itemId];
+        
+        // ADDED: Validate if caller is AssetContract
+        require(msg.sender == asset.currentContract, "Unauthorized caller.");
+
+        // ADDED: Update borrower status
+        borrowers[_borrower] = false;
+        flags[_borrower] = true;
     }
 
     /// @notice Pay the penalty fee to remove the flagged status
