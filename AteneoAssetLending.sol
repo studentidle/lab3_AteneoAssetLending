@@ -21,13 +21,13 @@ contract AteneoLendingContract {
 
     /// @notice Modifier that checks if user is flagged
     modifier flagged() {
-        require(flags[msg.sender] == true, "You are flagged. Pay the penalty first"); // ADDED: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
+        require(flags[msg.sender] == true, "You are not flagged. "); // ADDED: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
         _;
     }
 
     /// @notice Modifier that checks if user is not flagged
     modifier notFlagged() {
-        require(flags[msg.sender] == false, "You are not flagged!"); // ADDED: Modifier to check if user is not flagged, else revert with an error message for paying penalty
+        require(flags[msg.sender] == false, "You are flagged! Pay the penalty first"); // ADDED: Modifier to check if user is not flagged, else revert with an error message for paying penalty
         _;
     }
 
