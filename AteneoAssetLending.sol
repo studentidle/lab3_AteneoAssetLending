@@ -12,8 +12,8 @@ struct Asset {
 
 contract AteneoLendingContract {
 
-    // TO ADD: Set the penalty fee for returning an asset late
-    // TO ADD: Set the security deposit for all borrowers 
+    uint constant PENALTY = 2000000 // (ADDED) TO ADD: Set the penalty fee for returning an asset late
+    uint constant DEPOSIT = 1000000 // (ADDED) TO ADD: Set the security deposit for all borrowers 
 
     mapping(address => bool) public flags; // Mapping of flagged users
     mapping(address => bool) private borrowers; // Mapping of borrowers and borrowing status
@@ -41,7 +41,16 @@ contract AteneoLendingContract {
     /// @param _name The name of the asset
     /// @param _rental_fee The rental fee for borrowing the asset
     function listItem(string memory _name, uint _rental_fee) external {
-        // TO ADD: Add asset to the list of available assets
+        // (ADDED) TO ADD: Add asset to the list of available assets
+        Asset newAsset = new Asset({
+            owner = msg.sender,
+            name = _name,
+            rental_fee = _rental_fee,
+            borrowed = false,
+            currentContract = address(0)
+        });
+
+        listedAssets.push(newAsset);
     }
 
     /// @notice Borrow an asset by ID, paying rental and deposit fees
