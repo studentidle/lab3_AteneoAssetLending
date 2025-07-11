@@ -112,7 +112,7 @@ contract AteneoLendingContract {
     function payPenalty() external payable flagged {
         require(msg.value == PENALTY, "Incorrect penalty amount. Plese pay exactly 2000000 Wei" ); // ADDED: Check if the penalty payment is correct
         flags[msg.sender] = false;
-        // TO ADD: Check penalty payment amount and update borrower status
+        //ADDED: Check penalty payment amount and update borrower status
     }
 
     /// @notice Retrieve the full list of listed assets
