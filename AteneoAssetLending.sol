@@ -12,8 +12,8 @@ struct Asset {
 
 contract AteneoLendingContract {
 
-    uint constant PENALTY = 2000000 // (ADDED) TO ADD: Set the penalty fee for returning an asset late
-    uint constant DEPOSIT = 1000000 // (ADDED) TO ADD: Set the security deposit for all borrowers 
+    uint constant PENALTY = 2000000; // (ADDED) TO ADD: Set the penalty fee for returning an asset late
+    uint constant DEPOSIT = 1000000; // (ADDED) TO ADD: Set the security deposit for all borrowers 
 
     mapping(address => bool) public flags; // Mapping of flagged users
     mapping(address => bool) private borrowers; // Mapping of borrowers and borrowing status
@@ -21,13 +21,13 @@ contract AteneoLendingContract {
 
     /// @notice Modifier that checks if user is flagged
     modifier flagged() {
-        // TO ADD: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
+        require(flags[msg.sender], "You are not flagged!"); // (ADDED) TO ADD: Modifier to check if user is flagged, else revert with an error message saying that user is not flagged
         _;
     }
 
     /// @notice Modifier that checks if user is not flagged
     modifier notFlagged() {
-        // TO ADD: Modifier to check if user is not flagged, else revert with an error message for paying penalty
+        require(flags[msg.sender] == false, "You have been flagged! Please pay the penalty fee."); // (ADDED) TO ADD: Modifier to check if user is not flagged, else revert with an error message for paying penalty
         _;
     }
 
@@ -43,11 +43,11 @@ contract AteneoLendingContract {
     function listItem(string memory _name, uint _rental_fee) external {
         // (ADDED) TO ADD: Add asset to the list of available assets
         Asset newAsset = new Asset({
-            owner = msg.sender,
-            name = _name,
-            rental_fee = _rental_fee,
-            borrowed = false,
-            currentContract = address(0)
+            owner: msg.sender,
+            name: _name,
+            rental_fee: _rental_fee,
+            borrowed: false,
+            currentContract: address(0)
         });
 
         listedAssets.push(newAsset);
@@ -56,7 +56,7 @@ contract AteneoLendingContract {
     /// @notice Borrow an asset by ID, paying rental and deposit fees
     /// @param _itemId The index of the asset in the list
     function borrow(uint _itemId) external payable notBorrowing notFlagged {
-        // TO ADD: Check if _itemId is valid
+        require(_itemId < listedAssets.length, "Asset does not exist."); // (ADDED) TO ADD: Check if _itemId is valid
         // TO ADD: Check if asset is already borrowed
         // TO ADD: Check if the payment is correct
 
