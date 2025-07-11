@@ -33,7 +33,7 @@ contract AteneoLendingContract {
 
     /// @notice Modifier that checks if user is not flagged
     modifier notBorrowing() {
-        // TO ADD: Modifier to check if user is not currently borrowing an asset
+        require(borrowers[msg.sender] == false, "You're already borrowing an asset!"); // (ADDED) TO ADD: Modifier to check if user is not currently borrowing an asset
         _;
     }
 
